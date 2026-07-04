@@ -1,0 +1,27 @@
+[package]
+name = "plugma"
+version = "0.1.1"
+edition = "2024"
+authors = ["Akheke"]
+license = "MIT OR Apache-2.0"
+description = "A CLI tool for encrypting and decrypting text."
+
+[profile.release]
+opt-level = 3        # サイズ最小化なら "z"、速度最優先なら 3
+lto = "fat"             # Link Time Optimization を有効化
+codegen-units = 1      # 並列コンパイルを減らして最適化を強化
+panic = "unwind"        # バイナリを小さくする
+strip = true           # デバッグ情報を削除（Rust 1.78+）
+
+
+[dependencies]
+base64 = "0.22.1"
+chacha20poly1305 = "0.10"
+clap = { version = "4.6.1", features = ["derive"] }
+hex = "0.4.3"
+rand = "0.8"
+hkdf = "0.12"
+sha2 = "0.10"
+x25519-dalek = "1"
+rand_core = "0.5"
+crossterm = "0.29.0"
