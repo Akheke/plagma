@@ -6,6 +6,8 @@ use std::io::{Write};
 use std::process;
 //use crossterm::event::{read, Event};
 
+use std::path::Path;
+
 mod func;
 
 #[derive(Parser, Debug)]
@@ -19,9 +21,7 @@ struct Args {
 enum Command {
     /// make secret key and public key
     Key {
-        /// plugin folder
-        #[arg(short='E', long)]
-        encryptors: std::path::PathBuf,
+
 
         /// keep processing as much as possible
         #[arg(short, long)]
@@ -117,45 +117,17 @@ pub enum Output {
 
 fn main() {
     let args = Args::parse();
+    let my_secret_path = Path::new("keys/sec.key");
+    let my_public_path = Path::new("keys/pub.key");
+    let their_public_path = Path::new("keys/their_pub.key");
+
+    let _ = their_public_path;
+
 
     match args.command {
-        Command::Key { encryptors, force, quiet } => {
-            let order_files = func::find_order_files(
-                encryptors.as_path(),
-                "order",
-                force,
-                quiet,
-            ).unwrap_or_else(|e| {
-                eprintln!("Error: failed to read order files: {}", e);
-                process::exit(1);
-            });
+        Command::Key {force, quiet } => {
 
-            if order_files.is_empty() {
-                eprintln!("Error: no order file found in {:?}", encryptors);
-                process::exit(1);
-            }
-
-            let content = fs::read_to_string(&order_files[0]).unwrap_or_else(|e| {
-                eprintln!("failed to read order file: {}", e);
-                process::exit(1);
-            });
-
-            let first_plugin = content
-                .split(";")
-                .map(|s| s.trim())
-                .filter(|s| !s.is_empty())
-                .next()
-                .map(|name| {
-                    let mut p = encryptors.clone();
-                    p.push(name);
-                    p
-                })
-                .unwrap_or_else(|| {
-                    eprintln!("Error: order file is empty");
-                    process::exit(1);
-                });
-
-            func::create_key(force, quiet, true, first_plugin.as_path());
+            func::create_key(force, quiet, & my_secret_path, & my_public_path);
             println!("Key generation completed.");
         }
 

@@ -7,6 +7,15 @@ use std::process;
 use crate::Output;
 
 
+
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
+use rand_core::{OsRng};
+use std::path::Path;
+use x25519_dalek::{StaticSecret, PublicKey};
+
+
+
 pub fn read_chunks(path: &std::path::PathBuf, is_quiet: bool) -> Result<Vec<u8>, ()> {
     
     let mut log: String = String::from("reading file...");
@@ -348,32 +357,45 @@ pub fn cryptography(
     code
 }
 
-pub fn create_key(is_forced: bool,is_quiet: bool,key:bool,plugin_path: &std::path::Path) {
-    let mut log = String::from("making keys...");
-    output_log(&mut log, "start", is_quiet);
-        let output = process::Command::new(&plugin_path)
-            .arg("boo")
-            .arg("false")
-            .arg(is_forced.to_string())
-            .arg(is_quiet.to_string())
-            .arg(key.to_string())
-            .arg("foo")
-            .output()
-            .expect("failed to execute process");
+pub fn create_key(is_forced: bool,
+    is_quiet: bool,
+    my_secret_path:&Path,
+    my_pub_path:&Path
+) {
+    let _ = is_forced;
+    let mut log_message = String::from("generating the key bytes...");
+    output_log(&mut log_message, "start", is_quiet);
 
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        let stderr = String::from_utf8_lossy(&output.stderr);
+    let mut secret_b64 = String::new();
+    let mut public_b64 = String::new();
+    generate_keys(&mut secret_b64, &mut public_b64);
 
-        if output.status.success() {
-            output_log(&mut log, "success", is_quiet);
-            println!("Public Key: {}",stdout.to_string());
-        } else {
-            output_log(&mut log, "failed", is_quiet);
-            eprintln!("failed to make key ");
-            eprintln!("{}", stderr);
+    output_log(&mut log_message, "success", is_quiet);
 
-                process::exit(1);
-            }
+
+    let mut log_message = String::from("formatting the key bytes");
+    output_log(&mut log_message, "start", is_quiet);
+
+
+    let secret_bytes = STANDARD.decode(&secret_b64).unwrap();
+    let public_bytes = STANDARD.decode(&public_b64).unwrap();
+
+    let sec_arr:[u8; 32] = secret_bytes.try_into().unwrap();
+    let pub_arr:[u8; 32] = public_bytes.try_into().unwrap();
+
+    let sec_res = StaticSecret::from(sec_arr);
+    let pub_res = PublicKey::from(pub_arr);
+
+
+    output_log(&mut log_message, "success", is_quiet);
+
+
+    //ここのエラー処理を作る（課題）
+    let mut log_message = String::from("save the keys...");
+    output_log(&mut log_message, "success", is_quiet);
+    save_secret(&my_secret_path, &sec_res).expect("failed to save secret key");
+    save_public(&my_pub_path, &pub_res).expect("failed to save public key");
+    output_log(&mut log_message, "success", is_quiet);
         }
 
 
@@ -398,3 +420,34 @@ fn is_executable(path: &std::path::Path) -> bool {
     }
 }
 
+
+
+
+// ----------------------------
+// 鍵生成
+// ----------------------------
+pub fn generate_keys(secret: &mut String, public: &mut String) {
+    let my_secret = StaticSecret::new(OsRng);
+    let my_public = PublicKey::from(&my_secret);
+
+    *secret = STANDARD.encode(my_secret.to_bytes());
+    *public = STANDARD.encode(my_public.as_bytes());
+}
+
+// ----------------------------
+// 秘密鍵の保存・読み込み
+// ----------------------------
+pub fn save_secret(path: &Path, secret: &StaticSecret) -> std::io::Result<()> {
+    let encoded = STANDARD.encode(secret.to_bytes());
+    fs::write(path, encoded)?;
+    Ok(())
+}
+
+// ----------------------------
+// 公開鍵の保存・読み込み
+// ----------------------------
+pub fn save_public(path: &Path, pubkey: &PublicKey) -> std::io::Result<()> {
+    let encoded = STANDARD.encode(pubkey.as_bytes());
+    fs::write(path, encoded)?;
+    Ok(())
+}
