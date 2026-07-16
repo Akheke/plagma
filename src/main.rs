@@ -1,9 +1,9 @@
 //use base64::{Engine as _, engine::general_purpose};
 use clap::{Parser, ValueEnum, Subcommand};
-use std::fs;
-use std::io::{Write};
+//use std::fs;
+//use std::io::{Write};
 //use std::os::unix::fs::PermissionsExt;
-use std::process;
+//use std::process;
 //use crossterm::event::{read, Event};
 
 use std::path::Path;
@@ -34,9 +34,6 @@ enum Command {
 
     /// register the other person's public key
     Register {
-        /// plugin folder
-        #[arg(short='E', long)]
-        encryptors: std::path::PathBuf,
 
         /// keep processing as much as possible
         #[arg(short, long)]
@@ -131,43 +128,9 @@ fn main() {
             println!("Key generation completed.");
         }
 
-       Command::Register { encryptors, force, quiet } => {
-    // order ファイルを読む
-    let order_files = func::find_order_files(
-        encryptors.as_path(),
-        "order",
-        force,
-        quiet,
-    ).unwrap_or_else(|e| {
-        eprintln!("Error: failed to read order files: {}", e);
-        process::exit(1);
-    });
+       Command::Register {force, quiet } => {
+        let _ = force;
 
-    if order_files.is_empty() {
-        eprintln!("Error: no order file found in {:?}", encryptors);
-        process::exit(1);
-    }
-
-    let content = fs::read_to_string(&order_files[0]).unwrap_or_else(|e| {
-        eprintln!("failed to read order file: {}", e);
-        process::exit(1);
-    });
-
-    // 最初のプラグイン名を取得
-    let first_plugin = content
-        .split(";")
-        .map(|s| s.trim())
-        .filter(|s| !s.is_empty())
-        .next()
-        .map(|name| {
-            let mut p = encryptors.clone();
-            p.push(name);
-            p
-        })
-        .unwrap_or_else(|| {
-            eprintln!("Error: order file is empty");
-            process::exit(1);
-        });
 
     // 対話型で公開鍵を入力
     let their_pub = func::read_user_input("please enter public key(Base64): ");
@@ -177,26 +140,8 @@ fn main() {
         return;
     }
 
-    // plugin の stdin に公開鍵を渡す
-    let mut child = std::process::Command::new(&first_plugin)
-        .arg("boo")
-        .arg("false")
-        .arg(force.to_string())
-        .arg(quiet.to_string())
-        .arg("foo")
-        .arg("true") // register モード
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .spawn()
-        .expect("failed to execute plugin");
+    func::register_their_public(&their_pub, &their_public_path, force, quiet);
 
-    {
-        let stdin = child.stdin.as_mut().unwrap();
-        stdin.write_all(their_pub.as_bytes()).unwrap();
-    }
-
-    let output = child.wait_with_output().unwrap();
-    println!("{}", String::from_utf8_lossy(&output.stdout));
 }
 
 

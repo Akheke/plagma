@@ -1,23 +1,18 @@
 //use base64::{Engine as _, engine::general_purpose};
 use std::fs;
-use std::io::{self,  Write};
+use std::io::{self, Write};
 //use std::os::unix::fs::PermissionsExt;
 use std::process;
 //use crossterm::event::{read, Event};
 use crate::Output;
 
-
-
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use rand_core::{OsRng};
+use base64::engine::general_purpose::STANDARD;
+use rand_core::OsRng;
 use std::path::Path;
-use x25519_dalek::{StaticSecret, PublicKey};
-
-
+use x25519_dalek::{PublicKey, StaticSecret};
 
 pub fn read_chunks(path: &std::path::PathBuf, is_quiet: bool) -> Result<Vec<u8>, ()> {
-    
     let mut log: String = String::from("reading file...");
     output_log(&mut log, "start", is_quiet);
     /*
@@ -37,12 +32,12 @@ pub fn read_chunks(path: &std::path::PathBuf, is_quiet: bool) -> Result<Vec<u8>,
         Ok(s) => {
             output_log(&mut log, "success", is_quiet);
             Ok(s)
-        },
+        }
         Err(e) => {
-            eprintln!("failed to read file: {}",e);
+            eprintln!("failed to read file: {}", e);
             output_log(&mut log, "failed", is_quiet);
             process::exit(1);
-        },
+        }
     }
 }
 
@@ -87,25 +82,26 @@ pub fn get_target(path: &Option<std::path::PathBuf>, string: &String, is_quiet: 
         return string.as_bytes().to_vec();
     }
 
-    let path = path.as_ref().expect("target-path is required when no target string is provided");
+    let path = path
+        .as_ref()
+        .expect("target-path is required when no target string is provided");
     read_chunks(path, is_quiet).unwrap()
 }
 
 pub fn judge_mode(encrypt: bool, decode: bool, is_forced: bool) -> bool {
     let mode = match (encrypt, decode) {
-    (true, false) => true,
-    (false, true) => false,
-    (false, false) => false, // デフォルト
-    (true, true) => {
-        eprintln!("An unexpected error occurred when selecting the mode");
-        if !is_forced {
-            process::exit(1);
+        (true, false) => true,
+        (false, true) => false,
+        (false, false) => false, // デフォルト
+        (true, true) => {
+            eprintln!("An unexpected error occurred when selecting the mode");
+            if !is_forced {
+                process::exit(1);
+            }
+            false
         }
-        false
-    },
-};
-mode
-
+    };
+    mode
 }
 
 pub fn output_log(log: &mut String, result: &str, is_quiet: bool) {
@@ -120,10 +116,10 @@ pub fn output_log(log: &mut String, result: &str, is_quiet: bool) {
             println!(" : \x1b[32mSUCCESS\x1b[0m");
         }
         "failed" => {
-            print!(" : \x1b[31mFAILED\x1b[0m");
+            println!(" : \x1b[31mFAILED\x1b[0m");
         }
         _ => {
-            print!(" : \x1b[33mUNKNOWN\x1b[0m");
+            println!(" : \x1b[33mUNKNOWN\x1b[0m");
         }
     }
 }
@@ -136,7 +132,6 @@ pub fn read_user_input(prompt: &str) -> String {
     io::stdin().read_line(&mut input).unwrap();
     input.trim().to_string()
 }
-
 
 pub fn find_order_files(
     dir: &std::path::Path,
@@ -176,7 +171,7 @@ pub fn find_order_files(
     Ok(files)
 }
 
-/* 
+/*
 fn register_key(is_forced: bool,is_quiet: bool,register:bool,plugin_path: &std::path::Path) {
     let mut log = String::from("making keys...");
     output_log(&mut log, "start", is_quiet);
@@ -207,13 +202,13 @@ fn register_key(is_forced: bool,is_quiet: bool,register:bool,plugin_path: &std::
 */
 
 pub fn execute_process(
-     plugin_paths: Vec<std::path::PathBuf>,
+    plugin_paths: Vec<std::path::PathBuf>,
     code: &mut String,
     is_forced: bool,
     is_quiet: bool,
     encrypt: bool,
     decode: bool,
-)->Result<(), ()> {
+) -> Result<(), ()> {
     for plugin_path in plugin_paths {
         if !plugin_path.exists() {
             eprintln!("Error: {:?} does not exist.", plugin_path);
@@ -344,25 +339,27 @@ pub fn cryptography(
         })
         .collect::<Vec<std::path::PathBuf>>();
 
-        match execute_process(plugin_paths, &mut code, is_forced, is_quiet, encrypt, decode) {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("Error: failed to execute plugin process");
-                if !is_forced {
-                    process::exit(1);
-                }
+    match execute_process(
+        plugin_paths,
+        &mut code,
+        is_forced,
+        is_quiet,
+        encrypt,
+        decode,
+    ) {
+        Ok(_) => {}
+        Err(_) => {
+            eprintln!("Error: failed to execute plugin process");
+            if !is_forced {
+                process::exit(1);
             }
         }
+    }
 
     code
 }
 
-pub fn create_key(is_forced: bool,
-    is_quiet: bool,
-    my_secret_path:&Path,
-    my_pub_path:&Path
-) {
-    let _ = is_forced;
+pub fn create_key(is_forced: bool, is_quiet: bool, my_secret_path: &Path, my_pub_path: &Path) {
     let mut log_message = String::from("generating the key bytes...");
     output_log(&mut log_message, "start", is_quiet);
 
@@ -372,32 +369,67 @@ pub fn create_key(is_forced: bool,
 
     output_log(&mut log_message, "success", is_quiet);
 
-
-    let mut log_message = String::from("formatting the key bytes");
+    let mut log_message = String::from("formatting the key bytes...");
     output_log(&mut log_message, "start", is_quiet);
 
+    let secret_bytes = match STANDARD.decode(&secret_b64) {
+        Ok(r) => r,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{}", e);
+            process::exit(1);
+        }
+    };
+    let public_bytes = match STANDARD.decode(&public_b64) {
+        Ok(v) => v,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{}", e);
+            process::exit(1);
+        }
+    };
 
-    let secret_bytes = STANDARD.decode(&secret_b64).unwrap();
-    let public_bytes = STANDARD.decode(&public_b64).unwrap();
-
-    let sec_arr:[u8; 32] = secret_bytes.try_into().unwrap();
-    let pub_arr:[u8; 32] = public_bytes.try_into().unwrap();
+    let sec_arr: [u8; 32] = match secret_bytes.try_into() {
+        Ok(r) => r,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{:?}", e);
+            process::exit(1);
+        }
+    };
+    let pub_arr: [u8; 32] = match public_bytes.try_into() {
+        Ok(r) => r,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{:?}", e);
+            process::exit(1);
+        }
+    };
 
     let sec_res = StaticSecret::from(sec_arr);
     let pub_res = PublicKey::from(pub_arr);
 
-
-    output_log(&mut log_message, "success", is_quiet);
-
-
-    //ここのエラー処理を作る（課題）
     let mut log_message = String::from("save the keys...");
     output_log(&mut log_message, "success", is_quiet);
-    save_secret(&my_secret_path, &sec_res).expect("failed to save secret key");
-    save_public(&my_pub_path, &pub_res).expect("failed to save public key");
-    output_log(&mut log_message, "success", is_quiet);
-        }
 
+    match save_secret(&my_secret_path, &sec_res, is_forced, is_quiet) {
+        Ok(r) => r,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{:?}", e);
+            process::exit(1);
+        }
+    };
+    match save_public(&my_pub_path, &pub_res, is_forced, is_quiet) {
+        Ok(r) => r,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{:?}", e);
+            process::exit(1);
+        }
+    };
+    //output_log(&mut log_message, "success", is_quiet);
+}
 
 /*
 #[cfg(unix)]
@@ -415,18 +447,18 @@ fn is_executable(path: &std::path::Path) -> bool {
 #[cfg(windows)]
 fn is_executable(path: &std::path::Path) -> bool {
     match path.extension().and_then(|s| s.to_str()) {
-        Some(ext) => matches!(ext.to_ascii_lowercase().as_str(), "exe" | "bat" | "cmd" | "key"),
+        Some(ext) => matches!(
+            ext.to_ascii_lowercase().as_str(),
+            "exe" | "bat" | "cmd" | "key"
+        ),
         None => false,
     }
 }
 
-
-
-
 // ----------------------------
 // 鍵生成
 // ----------------------------
-pub fn generate_keys(secret: &mut String, public: &mut String) {
+fn generate_keys(secret: &mut String, public: &mut String) {
     let my_secret = StaticSecret::new(OsRng);
     let my_public = PublicKey::from(&my_secret);
 
@@ -437,8 +469,56 @@ pub fn generate_keys(secret: &mut String, public: &mut String) {
 // ----------------------------
 // 秘密鍵の保存・読み込み
 // ----------------------------
-pub fn save_secret(path: &Path, secret: &StaticSecret) -> std::io::Result<()> {
+fn save_secret(path: &Path, secret: &StaticSecret, is_forced: bool, is_quiet: bool) -> std::io::Result<()> {
     let encoded = STANDARD.encode(secret.to_bytes());
+
+if let Some(parent) = path.parent() {
+    if !parent.exists() {
+        if !is_forced {
+            eprintln!(
+                "[confirmation] The directory for saving key data was not found. \nWould you like to use auto-correction?(Y/n)");
+            let mut is_checked = false;
+
+            while !is_checked {
+                let mut input = String::new();
+                match std::io::stdin().read_line(&mut input) {
+                    Ok(_) => match input.trim() {
+                        "Y" | "y" => {
+                            is_checked = true;
+                            let mut message = String::from("solving the problem...");
+                            output_log(&mut message, "start", is_quiet);
+
+                            match fs::create_dir_all(parent) {
+                                Ok(_) => output_log(&mut message, "success", is_quiet),
+                                Err(e) => {
+                                    output_log(&mut message, "failed", is_quiet);
+                                    println!("{}", e);
+                                    process::exit(1);
+                                }
+                            }
+                        }
+                        "N" | "n" => process::exit(0),
+                        other => eprintln!("Error: invalid input: {}.", other),
+                    },
+                    Err(e) => eprintln!("Error: failed to get input.\n{}", e),
+                }
+            }
+        } else {
+            println!("{}","[INFO] Since the path where the key data is stored did not exist, a new directory will be created.");
+            let mut message = String::from("create new directory...");
+            output_log(&mut message, "start", is_quiet);
+
+            match fs::create_dir_all(parent) {
+                Ok(_) => output_log(&mut message, "success", is_quiet),
+                Err(e) => {
+                    output_log(&mut message, "failed", is_quiet);
+                    println!("{}", e);
+                }
+            }
+        }
+    }
+}
+
     fs::write(path, encoded)?;
     Ok(())
 }
@@ -446,8 +526,92 @@ pub fn save_secret(path: &Path, secret: &StaticSecret) -> std::io::Result<()> {
 // ----------------------------
 // 公開鍵の保存・読み込み
 // ----------------------------
-pub fn save_public(path: &Path, pubkey: &PublicKey) -> std::io::Result<()> {
+fn save_public(path: &Path, pubkey: &PublicKey, is_forced: bool, is_quiet: bool) -> std::io::Result<()> {
     let encoded = STANDARD.encode(pubkey.as_bytes());
+
+    if let Some(parent) = path.parent() {
+    if !parent.exists() {
+        if !is_forced {
+            eprintln!(
+                "[confirmation] The directory for saving key data was not found. \nWould you like to use auto-correction?(Y/n)");
+            let mut is_checked = false;
+
+            while !is_checked {
+                let mut input = String::new();
+                match std::io::stdin().read_line(&mut input) {
+                    Ok(_) => match input.trim() {
+                        "Y" | "y" => {
+                            is_checked = true;
+                            let mut message = String::from("solving the problem...");
+                            output_log(&mut message, "start", is_quiet);
+
+                            match fs::create_dir_all(parent) {
+                                Ok(_) => output_log(&mut message, "success", is_quiet),
+                                Err(e) => {
+                                    output_log(&mut message, "failed", is_quiet);
+                                    println!("{}", e);
+                                    process::exit(1);
+                                }
+                            }
+                        }
+                        "N" | "n" => process::exit(0),
+                        other => eprintln!("Error: invalid input: {}.", other),
+                    },
+                    Err(e) => eprintln!("Error: failed to get input.\n{}", e),
+                }
+            }
+        } else {
+            println!("{}","[INFO] Since the path where the key data is stored did not exist, a new directory will be created.");
+            let mut message = String::from("create new directory...");
+            output_log(&mut message, "start", is_quiet);
+
+            match fs::create_dir_all(parent) {
+                Ok(_) => output_log(&mut message, "success", is_quiet),
+                Err(e) => {
+                    output_log(&mut message, "failed", is_quiet);
+                    println!("{}", e);
+                }
+            }
+        }
+    }
+}
+
     fs::write(path, encoded)?;
     Ok(())
+}
+
+// ----------------------------
+// 相手公開鍵の登録
+// ----------------------------
+pub fn register_their_public(their_pub_key: &String, their_public_path: &Path, is_forced: bool, is_quiet: bool) {
+    let mut log_message = String::from("registering key...");
+    output_log(&mut log_message, "start", is_quiet);
+    let bytes = match STANDARD.decode(their_pub_key) {
+        Ok(v) => v,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{}", e);
+            process::exit(1);
+        }
+    };
+
+    let arr: [u8; 32] = match bytes.try_into() {
+        Ok(v) => v,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{:?}", e);
+            process::exit(1);
+        }
+    };
+    let pubkey = PublicKey::from(arr);
+
+    match save_public(their_public_path, &pubkey, is_forced, is_quiet) {
+        Ok(v) => v,
+        Err(e) => {
+            output_log(&mut log_message, "failed", is_quiet);
+            println!("{}", e);
+            process::exit(1);
+        }
+    };
+    output_log(&mut log_message, "success", is_quiet);
 }

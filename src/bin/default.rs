@@ -17,28 +17,9 @@ use rand_core::{OsRng, RngCore};
 use std::path::Path;
 use std::fs;
 use std::env;
-use std::io::{self, Read};
+//use std::io::{self, Read};
 
 
-// ----------------------------
-// 鍵生成
-// ----------------------------
-fn generate_keys(secret: &mut String, public: &mut String) {
-    let my_secret = StaticSecret::new(OsRng);
-    let my_public = PublicKey::from(&my_secret);
-
-    *secret = STANDARD.encode(my_secret.to_bytes());
-    *public = STANDARD.encode(my_public.as_bytes());
-}
-
-// ----------------------------
-// 秘密鍵の保存・読み込み
-// ----------------------------
-fn save_secret(path: &Path, secret: &StaticSecret) -> std::io::Result<()> {
-    let encoded = STANDARD.encode(secret.to_bytes());
-    fs::write(path, encoded)?;
-    Ok(())
-}
 
 fn load_secret(path: &Path) -> StaticSecret {
     let encoded = fs::read_to_string(path).expect("failed to read secret key file");
@@ -48,14 +29,6 @@ fn load_secret(path: &Path) -> StaticSecret {
     StaticSecret::from(arr)
 }
 
-// ----------------------------
-// 公開鍵の保存・読み込み
-// ----------------------------
-fn save_public(path: &Path, pubkey: &PublicKey) -> std::io::Result<()> {
-    let encoded = STANDARD.encode(pubkey.as_bytes());
-    fs::write(path, encoded)?;
-    Ok(())
-}
 
 fn load_public(path: &Path) -> PublicKey {
     let encoded = fs::read_to_string(path).expect("failed to read public key file");
@@ -142,23 +115,6 @@ fn decrypt_message(
     String::from_utf8(plaintext_bytes).expect("plaintext is not valid UTF-8")
 }
 
-// ----------------------------
-// 相手公開鍵の登録
-// ----------------------------
-fn register_their_public(their_public_path: &Path) {
-    let mut input = String::new();
-    io::stdin()
-        .read_to_string(&mut input)
-        .expect("failed to read their public key from stdin");
-
-    let input = input.trim();
-    let bytes = STANDARD.decode(input).expect("failed to decode their public key");
-
-    let arr: [u8; 32] = bytes.try_into().expect("public key must be 32 bytes");
-    let pubkey = PublicKey::from(arr);
-
-    save_public(their_public_path, &pubkey).expect("failed to save their public key");
-}
 
 fn compare_pub_keys(key1:&PublicKey, key2:&PublicKey) -> bool {
     if key1 == key2 {
@@ -200,36 +156,6 @@ fn main() {
             }
         }
 
-        7 => {
-            let key_flag = &args[5];
-            let register_flag = &args[6];
-
-            if key_flag == "true" {
-                let mut my_secret_b64 = String::new();
-                let mut my_public_b64 = String::new();
-                generate_keys(&mut my_secret_b64, &mut my_public_b64);
-
-                let secret_bytes = STANDARD.decode(&my_secret_b64).unwrap();
-                let public_bytes = STANDARD.decode(&my_public_b64).unwrap();
-
-                let sec_arr: [u8; 32] = secret_bytes.try_into().unwrap();
-                let pub_arr: [u8; 32] = public_bytes.try_into().unwrap();
-
-                let my_secret = StaticSecret::from(sec_arr);
-                let my_public = PublicKey::from(pub_arr);
-
-                save_secret(my_secret_path, &my_secret).expect("failed to save secret key");
-                save_public(my_public_path, &my_public).expect("failed to save public key");
-
-                print!("\n{}\n", my_public_b64);
-            } else if register_flag == "true" {
-                register_their_public(their_public_path);
-                println!("registered their public key");
-            } else {
-                eprintln!("no operation specified (key/register flags are false)");
-                std::process::exit(1);
-            }
-        }
 
         _ => {
             eprintln!("invalid arguments for plugin");
