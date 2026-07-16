@@ -1,5 +1,5 @@
 //use base64::{Engine as _, engine::general_purpose};
-use clap::{Parser, ValueEnum, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 //use std::fs;
 //use std::io::{Write};
 //use std::os::unix::fs::PermissionsExt;
@@ -21,8 +21,6 @@ struct Args {
 enum Command {
     /// make secret key and public key
     Key {
-
-
         /// keep processing as much as possible
         #[arg(short, long)]
         force: bool,
@@ -34,7 +32,6 @@ enum Command {
 
     /// register the other person's public key
     Register {
-
         /// keep processing as much as possible
         #[arg(short, long)]
         force: bool,
@@ -52,7 +49,7 @@ enum Command {
         #[arg(long = "output-path", alias = "op", requires = "output")]
         output_path: Option<std::path::PathBuf>,
 
-        #[arg(short='E', long)]
+        #[arg(short = 'E', long)]
         encryptors: std::path::PathBuf,
 
         #[arg(long, alias = "tp", conflicts_with = "target")]
@@ -76,7 +73,7 @@ enum Command {
         #[arg(long = "output-path", alias = "op", requires = "output")]
         output_path: Option<std::path::PathBuf>,
 
-        #[arg(short='E', long)]
+        #[arg(short = 'E', long)]
         encryptors: std::path::PathBuf,
 
         #[arg(long, alias = "tp", conflicts_with = "target")]
@@ -92,7 +89,6 @@ enum Command {
         quiet: bool,
     },
 }
-
 
 #[derive(Copy, Clone, Debug, ValueEnum, PartialEq)]
 pub enum Output {
@@ -120,31 +116,25 @@ fn main() {
 
     let _ = their_public_path;
 
-
     match args.command {
-        Command::Key {force, quiet } => {
-
-            func::create_key(force, quiet, & my_secret_path, & my_public_path);
+        Command::Key { force, quiet } => {
+            func::create_key(force, quiet, &my_secret_path, &my_public_path);
             println!("Key generation completed.");
         }
 
-       Command::Register {force, quiet } => {
-        let _ = force;
+        Command::Register { force, quiet } => {
+            let _ = force;
 
+            // 対話型で公開鍵を入力
+            let their_pub = func::read_user_input("please enter public key(Base64): ");
 
-    // 対話型で公開鍵を入力
-    let their_pub = func::read_user_input("please enter public key(Base64): ");
+            if their_pub.is_empty() {
+                println!("public key is empty.please try again.");
+                return;
+            }
 
-    if their_pub.is_empty() {
-        println!("public key is empty.please try again.");
-        return;
-    }
-
-    func::register_their_public(&their_pub, &their_public_path, force, quiet);
-
-}
-
-
+            func::register_their_public(&their_pub, &their_public_path, force, quiet);
+        }
 
         Command::Encrypt {
             output,
@@ -157,14 +147,8 @@ fn main() {
         } => {
             let target = func::get_target(&target_path, &target.unwrap_or_default(), quiet);
 
-            let result = func::cryptography(
-                encryptors.as_path(),
-                force,
-                quiet,
-                target,
-                true,
-                false,
-            );
+            let result =
+                func::cryptography(encryptors.as_path(), force, quiet, target, true, false);
 
             func::handle_output(output, output_path, result, quiet, force);
         }
@@ -180,19 +164,10 @@ fn main() {
         } => {
             let target = func::get_target(&target_path, &target.unwrap_or_default(), quiet);
 
-            let result = func::cryptography(
-                encryptors.as_path(),
-                force,
-                quiet,
-                target,
-                false,
-                true,
-            );
+            let result =
+                func::cryptography(encryptors.as_path(), force, quiet, target, false, true);
 
             func::handle_output(output, output_path, result, quiet, force);
         }
     }
 }
-
-
-

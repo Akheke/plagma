@@ -3,7 +3,7 @@ pub enum Command {
     /// make secret key and public key
     Key {
         /// plugin folder
-        #[arg(short='E', long)]
+        #[arg(short = 'E', long)]
         encryptors: std::path::PathBuf,
 
         /// keep processing as much as possible
@@ -18,7 +18,7 @@ pub enum Command {
     /// register the other person's public key
     Register {
         /// plugin folder
-        #[arg(short='E', long)]
+        #[arg(short = 'E', long)]
         encryptors: std::path::PathBuf,
 
         /// keep processing as much as possible
@@ -38,7 +38,7 @@ pub enum Command {
         #[arg(long = "output-path", alias = "op", requires = "output")]
         output_path: Option<std::path::PathBuf>,
 
-        #[arg(short='E', long)]
+        #[arg(short = 'E', long)]
         encryptors: std::path::PathBuf,
 
         #[arg(long, alias = "tp", conflicts_with = "target")]
@@ -62,7 +62,7 @@ pub enum Command {
         #[arg(long = "output-path", alias = "op", requires = "output")]
         output_path: Option<std::path::PathBuf>,
 
-        #[arg(short='E', long)]
+        #[arg(short = 'E', long)]
         encryptors: std::path::PathBuf,
 
         #[arg(long, alias = "tp", conflicts_with = "target")]

@@ -1,38 +1,33 @@
-use chacha20poly1305::{
-    ChaCha20Poly1305,
-    Key,
-    Nonce,
-    KeyInit,
-    aead::Aead,
-};
-use x25519_dalek::{StaticSecret, PublicKey, SharedSecret};
+use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
 use hkdf::Hkdf;
 use sha2::Sha256;
+use x25519_dalek::{PublicKey, SharedSecret, StaticSecret};
 
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 
 use rand_core::{OsRng, RngCore};
 
-use std::path::Path;
-use std::fs;
 use std::env;
+use std::fs;
+use std::path::Path;
 //use std::io::{self, Read};
-
-
 
 fn load_secret(path: &Path) -> StaticSecret {
     let encoded = fs::read_to_string(path).expect("failed to read secret key file");
-    let bytes = STANDARD.decode(encoded).expect("failed to decode secret key");
+    let bytes = STANDARD
+        .decode(encoded)
+        .expect("failed to decode secret key");
 
     let arr: [u8; 32] = bytes.try_into().expect("secret key must be 32 bytes");
     StaticSecret::from(arr)
 }
 
-
 fn load_public(path: &Path) -> PublicKey {
     let encoded = fs::read_to_string(path).expect("failed to read public key file");
-    let bytes = STANDARD.decode(encoded).expect("failed to decode public key");
+    let bytes = STANDARD
+        .decode(encoded)
+        .expect("failed to decode public key");
 
     let arr: [u8; 32] = bytes.try_into().expect("public key must be 32 bytes");
     PublicKey::from(arr)
@@ -104,7 +99,9 @@ fn decrypt_message(
     let cipher = ChaCha20Poly1305::new(&key);
 
     let nonce_bytes = STANDARD.decode(nonce_b64).expect("failed to decode nonce");
-    let ciphertext = STANDARD.decode(ciphertext_b64).expect("failed to decode ciphertext");
+    let ciphertext = STANDARD
+        .decode(ciphertext_b64)
+        .expect("failed to decode ciphertext");
 
     let nonce = Nonce::from_slice(&nonce_bytes);
 
@@ -115,13 +112,8 @@ fn decrypt_message(
     String::from_utf8(plaintext_bytes).expect("plaintext is not valid UTF-8")
 }
 
-
-fn compare_pub_keys(key1:&PublicKey, key2:&PublicKey) -> bool {
-    if key1 == key2 {
-        true
-    } else {
-        false
-    }
+fn compare_pub_keys(key1: &PublicKey, key2: &PublicKey) -> bool {
+    if key1 == key2 { true } else { false }
 }
 
 // ----------------------------
@@ -140,7 +132,8 @@ fn main() {
             let mode = &args[2];
 
             if mode == "true" {
-                let result = encrypt_message(my_secret_path, my_public_path,  their_public_path, code);
+                let result =
+                    encrypt_message(my_secret_path, my_public_path, their_public_path, code);
                 print!("{}", result);
             } else {
                 let parts: Vec<&str> = code.split(':').collect();
@@ -155,7 +148,6 @@ fn main() {
                 print!("{}", result);
             }
         }
-
 
         _ => {
             eprintln!("invalid arguments for plugin");

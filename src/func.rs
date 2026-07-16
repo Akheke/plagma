@@ -469,55 +469,64 @@ fn generate_keys(secret: &mut String, public: &mut String) {
 // ----------------------------
 // 秘密鍵の保存・読み込み
 // ----------------------------
-fn save_secret(path: &Path, secret: &StaticSecret, is_forced: bool, is_quiet: bool) -> std::io::Result<()> {
+fn save_secret(
+    path: &Path,
+    secret: &StaticSecret,
+    is_forced: bool,
+    is_quiet: bool,
+) -> std::io::Result<()> {
     let encoded = STANDARD.encode(secret.to_bytes());
 
-if let Some(parent) = path.parent() {
-    if !parent.exists() {
-        if !is_forced {
-            eprintln!(
-                "[confirmation] The directory for saving key data was not found. \nWould you like to use auto-correction?(Y/n)");
-            let mut is_checked = false;
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            if !is_forced {
+                eprintln!(
+                    "[confirmation] The directory for saving key data was not found. \nWould you like to use auto-correction?(Y/n)"
+                );
+                let mut is_checked = false;
 
-            while !is_checked {
-                let mut input = String::new();
-                match std::io::stdin().read_line(&mut input) {
-                    Ok(_) => match input.trim() {
-                        "Y" | "y" => {
-                            is_checked = true;
-                            let mut message = String::from("solving the problem...");
-                            output_log(&mut message, "start", is_quiet);
+                while !is_checked {
+                    let mut input = String::new();
+                    match std::io::stdin().read_line(&mut input) {
+                        Ok(_) => match input.trim() {
+                            "Y" | "y" => {
+                                is_checked = true;
+                                let mut message = String::from("solving the problem...");
+                                output_log(&mut message, "start", is_quiet);
 
-                            match fs::create_dir_all(parent) {
-                                Ok(_) => output_log(&mut message, "success", is_quiet),
-                                Err(e) => {
-                                    output_log(&mut message, "failed", is_quiet);
-                                    println!("{}", e);
-                                    process::exit(1);
+                                match fs::create_dir_all(parent) {
+                                    Ok(_) => output_log(&mut message, "success", is_quiet),
+                                    Err(e) => {
+                                        output_log(&mut message, "failed", is_quiet);
+                                        println!("{}", e);
+                                        process::exit(1);
+                                    }
                                 }
                             }
-                        }
-                        "N" | "n" => process::exit(0),
-                        other => eprintln!("Error: invalid input: {}.", other),
-                    },
-                    Err(e) => eprintln!("Error: failed to get input.\n{}", e),
+                            "N" | "n" => process::exit(0),
+                            other => eprintln!("Error: invalid input: {}.", other),
+                        },
+                        Err(e) => eprintln!("Error: failed to get input.\n{}", e),
+                    }
                 }
-            }
-        } else {
-            println!("{}","[INFO] Since the path where the key data is stored did not exist, a new directory will be created.");
-            let mut message = String::from("create new directory...");
-            output_log(&mut message, "start", is_quiet);
+            } else {
+                println!(
+                    "{}",
+                    "[INFO] Since the path where the key data is stored did not exist, a new directory will be created."
+                );
+                let mut message = String::from("create new directory...");
+                output_log(&mut message, "start", is_quiet);
 
-            match fs::create_dir_all(parent) {
-                Ok(_) => output_log(&mut message, "success", is_quiet),
-                Err(e) => {
-                    output_log(&mut message, "failed", is_quiet);
-                    println!("{}", e);
+                match fs::create_dir_all(parent) {
+                    Ok(_) => output_log(&mut message, "success", is_quiet),
+                    Err(e) => {
+                        output_log(&mut message, "failed", is_quiet);
+                        println!("{}", e);
+                    }
                 }
             }
         }
     }
-}
 
     fs::write(path, encoded)?;
     Ok(())
@@ -526,55 +535,64 @@ if let Some(parent) = path.parent() {
 // ----------------------------
 // 公開鍵の保存・読み込み
 // ----------------------------
-fn save_public(path: &Path, pubkey: &PublicKey, is_forced: bool, is_quiet: bool) -> std::io::Result<()> {
+fn save_public(
+    path: &Path,
+    pubkey: &PublicKey,
+    is_forced: bool,
+    is_quiet: bool,
+) -> std::io::Result<()> {
     let encoded = STANDARD.encode(pubkey.as_bytes());
 
     if let Some(parent) = path.parent() {
-    if !parent.exists() {
-        if !is_forced {
-            eprintln!(
-                "[confirmation] The directory for saving key data was not found. \nWould you like to use auto-correction?(Y/n)");
-            let mut is_checked = false;
+        if !parent.exists() {
+            if !is_forced {
+                eprintln!(
+                    "[confirmation] The directory for saving key data was not found. \nWould you like to use auto-correction?(Y/n)"
+                );
+                let mut is_checked = false;
 
-            while !is_checked {
-                let mut input = String::new();
-                match std::io::stdin().read_line(&mut input) {
-                    Ok(_) => match input.trim() {
-                        "Y" | "y" => {
-                            is_checked = true;
-                            let mut message = String::from("solving the problem...");
-                            output_log(&mut message, "start", is_quiet);
+                while !is_checked {
+                    let mut input = String::new();
+                    match std::io::stdin().read_line(&mut input) {
+                        Ok(_) => match input.trim() {
+                            "Y" | "y" => {
+                                is_checked = true;
+                                let mut message = String::from("solving the problem...");
+                                output_log(&mut message, "start", is_quiet);
 
-                            match fs::create_dir_all(parent) {
-                                Ok(_) => output_log(&mut message, "success", is_quiet),
-                                Err(e) => {
-                                    output_log(&mut message, "failed", is_quiet);
-                                    println!("{}", e);
-                                    process::exit(1);
+                                match fs::create_dir_all(parent) {
+                                    Ok(_) => output_log(&mut message, "success", is_quiet),
+                                    Err(e) => {
+                                        output_log(&mut message, "failed", is_quiet);
+                                        println!("{}", e);
+                                        process::exit(1);
+                                    }
                                 }
                             }
-                        }
-                        "N" | "n" => process::exit(0),
-                        other => eprintln!("Error: invalid input: {}.", other),
-                    },
-                    Err(e) => eprintln!("Error: failed to get input.\n{}", e),
+                            "N" | "n" => process::exit(0),
+                            other => eprintln!("Error: invalid input: {}.", other),
+                        },
+                        Err(e) => eprintln!("Error: failed to get input.\n{}", e),
+                    }
                 }
-            }
-        } else {
-            println!("{}","[INFO] Since the path where the key data is stored did not exist, a new directory will be created.");
-            let mut message = String::from("create new directory...");
-            output_log(&mut message, "start", is_quiet);
+            } else {
+                println!(
+                    "{}",
+                    "[INFO] Since the path where the key data is stored did not exist, a new directory will be created."
+                );
+                let mut message = String::from("create new directory...");
+                output_log(&mut message, "start", is_quiet);
 
-            match fs::create_dir_all(parent) {
-                Ok(_) => output_log(&mut message, "success", is_quiet),
-                Err(e) => {
-                    output_log(&mut message, "failed", is_quiet);
-                    println!("{}", e);
+                match fs::create_dir_all(parent) {
+                    Ok(_) => output_log(&mut message, "success", is_quiet),
+                    Err(e) => {
+                        output_log(&mut message, "failed", is_quiet);
+                        println!("{}", e);
+                    }
                 }
             }
         }
     }
-}
 
     fs::write(path, encoded)?;
     Ok(())
@@ -583,7 +601,12 @@ fn save_public(path: &Path, pubkey: &PublicKey, is_forced: bool, is_quiet: bool)
 // ----------------------------
 // 相手公開鍵の登録
 // ----------------------------
-pub fn register_their_public(their_pub_key: &String, their_public_path: &Path, is_forced: bool, is_quiet: bool) {
+pub fn register_their_public(
+    their_pub_key: &String,
+    their_public_path: &Path,
+    is_forced: bool,
+    is_quiet: bool,
+) {
     let mut log_message = String::from("registering key...");
     output_log(&mut log_message, "start", is_quiet);
     let bytes = match STANDARD.decode(their_pub_key) {
