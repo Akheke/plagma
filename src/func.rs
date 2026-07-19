@@ -10,9 +10,11 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use rand_core::OsRng;
 use std::path::Path;
+use std::path::PathBuf;
 use x25519_dalek::{PublicKey, StaticSecret};
 
-pub fn read_chunks(path: &std::path::PathBuf, is_quiet: bool) -> Result<Vec<u8>, ()> {
+
+pub fn read_chunks(path: &PathBuf, is_quiet: bool) -> Result<Vec<u8>, ()> {
     let mut log: String = String::from("reading file...");
     output_log(&mut log, "start", is_quiet);
     /*
@@ -43,7 +45,7 @@ pub fn read_chunks(path: &std::path::PathBuf, is_quiet: bool) -> Result<Vec<u8>,
 
 pub fn handle_output(
     output: Output,
-    output_path: Option<std::path::PathBuf>,
+    output_path: Option<PathBuf>,
     result: String,
     quiet: bool,
     force: bool,
@@ -77,7 +79,7 @@ pub fn handle_output(
     }
 }
 
-pub fn get_target(path: &Option<std::path::PathBuf>, string: &String, is_quiet: bool) -> Vec<u8> {
+pub fn get_target(path: &Option<PathBuf>, string: &String, is_quiet: bool) -> Vec<u8> {
     if !string.is_empty() {
         return string.as_bytes().to_vec();
     }
@@ -134,11 +136,11 @@ pub fn read_user_input(prompt: &str) -> String {
 }
 
 pub fn find_order_files(
-    dir: &std::path::Path,
+    dir: &Path,
     ext: &str,
     is_forced: bool,
     is_quiet: bool,
-) -> io::Result<Vec<std::path::PathBuf>> {
+) -> io::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
 
     let mut log: String = String::from("reading order file...");
@@ -172,7 +174,7 @@ pub fn find_order_files(
 }
 
 /*
-fn register_key(is_forced: bool,is_quiet: bool,register:bool,plugin_path: &std::path::Path) {
+fn register_key(is_forced: bool,is_quiet: bool,register:bool,plugin_path: &Path) {
     let mut log = String::from("making keys...");
     output_log(&mut log, "start", is_quiet);
         let output = process::Command::new(&plugin_path)
@@ -202,7 +204,7 @@ fn register_key(is_forced: bool,is_quiet: bool,register:bool,plugin_path: &std::
 */
 
 pub fn execute_process(
-    plugin_paths: Vec<std::path::PathBuf>,
+    plugin_paths: Vec<PathBuf>,
     code: &mut String,
     is_forced: bool,
     is_quiet: bool,
@@ -277,7 +279,7 @@ pub fn execute_process(
 }
 
 pub fn cryptography(
-    path: &std::path::Path,
+    path: &Path,
     is_forced: bool,
     is_quiet: bool,
     target: Vec<u8>,
@@ -337,7 +339,7 @@ pub fn cryptography(
             p.push(name);
             p
         })
-        .collect::<Vec<std::path::PathBuf>>();
+        .collect::<Vec<PathBuf>>();
 
     match execute_process(
         plugin_paths,
@@ -436,7 +438,7 @@ pub fn create_key(is_forced: bool, is_quiet: bool, my_secret_path: &Path, my_pub
 use std::os::unix::fs::PermissionsExt;
 
 #[cfg(unix)]
-fn is_executable(path: &std::path::Path) -> bool {
+fn is_executable(path: &Path) -> bool {
     match path.metadata() {
         Ok(meta) => meta.permissions().mode() & 0o111 != 0,
         Err(_) => false,
@@ -445,7 +447,7 @@ fn is_executable(path: &std::path::Path) -> bool {
     */
 
 #[cfg(windows)]
-fn is_executable(path: &std::path::Path) -> bool {
+fn is_executable(path: &Path) -> bool {
     match path.extension().and_then(|s| s.to_str()) {
         Some(ext) => matches!(
             ext.to_ascii_lowercase().as_str(),
@@ -638,3 +640,4 @@ pub fn register_their_public(
     };
     output_log(&mut log_message, "success", is_quiet);
 }
+

@@ -13,6 +13,8 @@ use std::fs;
 use std::path::Path;
 //use std::io::{self, Read};
 
+
+
 fn load_secret(path: &Path) -> StaticSecret {
     let encoded = fs::read_to_string(path).expect("failed to read secret key file");
     let bytes = STANDARD
