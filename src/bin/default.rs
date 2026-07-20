@@ -124,9 +124,9 @@ fn compare_pub_keys(key1: &PublicKey, key2: &PublicKey) -> bool {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let my_secret_path = Path::new("sec.key");
-    let my_public_path = Path::new("pub.key");
-    let their_public_path = Path::new("their_pub.key");
+    let my_secret_path = Path::new("keys/sec.key");
+    let my_public_path = Path::new("keys/pub.key");
+    let their_public_path = Path::new("keys/their_pub.key");
 
     match args.len() {
         5 => {
