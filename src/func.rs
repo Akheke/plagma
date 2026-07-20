@@ -458,7 +458,7 @@ fn is_executable(path: &Path) -> bool {
 }
 
 // ----------------------------
-// 鍵生成
+// generate key
 // ----------------------------
 fn generate_keys(secret: &mut String, public: &mut String) {
     let my_secret = StaticSecret::new(OsRng);
@@ -469,7 +469,7 @@ fn generate_keys(secret: &mut String, public: &mut String) {
 }
 
 // ----------------------------
-// 秘密鍵の保存・読み込み
+// save and read secret key
 // ----------------------------
 fn save_secret(
     path: &Path,
@@ -535,7 +535,7 @@ fn save_secret(
 }
 
 // ----------------------------
-// 公開鍵の保存・読み込み
+// save and read public key
 // ----------------------------
 fn save_public(
     path: &Path,

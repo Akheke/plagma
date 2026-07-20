@@ -1,17 +1,17 @@
 [package]
 name = "plugma"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Akheke"]
 license = "MIT OR Apache-2.0"
 description = "A CLI tool for encrypting and decrypting text."
 
 [profile.release]
-opt-level = 3        # サイズ最小化なら "z"、速度最優先なら 3
-lto = "fat"             # Link Time Optimization を有効化
-codegen-units = 1      # 並列コンパイルを減らして最適化を強化
-panic = "unwind"        # バイナリを小さくする
-strip = true           # デバッグ情報を削除（Rust 1.78+）
+opt-level = 3        # 'z' to minimize size, or 3 for maximum speed
+lto = "fat"             # Enable Link Time Optimization
+codegen-units = 1      # Reduce parallel compilation and boost optimization
+panic = "unwind"        # Make the binary smaller
+strip = true           # Remove debug info (Rust 1.78+)
 
 
 [dependencies]
